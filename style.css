@@ -1,0 +1,14 @@
+
+#current-weather{
+    display: none;
+    border: 1px solid black;
+}
+
+#forcast{
+    display: none;
+}
+
+.test {
+    width: 5px;
+    height: 5px;
+}
