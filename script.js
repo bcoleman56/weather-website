@@ -91,6 +91,10 @@ function renderResults(data){
     let wind;
     let humidity;
 
+    let tempHigh;
+    let windHigh;
+    let humidityHigh;
+
     for (let i = 0; i < data.list.length; i++){
         console.log(data.list[i].dt_txt)
         // If the date is today and if I havent rendered the most current weather yet
@@ -104,6 +108,7 @@ function renderResults(data){
 
             //render todays results
             currentWeatherEl.setAttribute('style', 'display: block');
+            forcastEl.setAttribute('style', 'display: flex');
             let tempEl = document.createElement('p');
             let windEl = document.createElement('p');
             let humidityEl = document.createElement('p');
@@ -121,19 +126,55 @@ function renderResults(data){
 
         // if not today
         } else {
-            day = data.list[i].dt_txt;
-            console.log(data.list[i].main.temp_max)
-            //get the highest number for the date
+
+            day = data.list[i].dt_txt.slice(0,10);
 
             //sets variables
             temp = kelvinToFahrenheit(data.list[i].main.temp)
             wind = data.list[i].wind.speed;
             humidity = data.list[i].main.humidity;
 
+            // if its the first time in the array for the next day we set those values as the highs
+            if (tempHigh === undefined){
+                tempHigh = temp;
+                windHigh = wind;
+                humidityHigh = humidity;
+            }
+
+            // GET HIGHS
+            if (temp > tempHigh){tempHigh = temp}
+            if (wind > windHigh){windHigh = wind}
+            if (humidity > humidityHigh){humidityHigh = humidity}
+            console.log(temp)
+
+            // if it is last data element
+            if (data.list.length - 1 === i){
+
+            } else if (data.list[i+1].dt_txt.slice(0,10) !== day) {
+                //render highs for the day
+                let dayEl = document.createElement('div');
+                let tempEl = document.createElement('p');
+                let windEl = document.createElement('p');
+                let humidityEl = document.createElement('p');
+                tempEl.textContent = 'Temp: ' + tempHigh + ' F';
+                windEl.textContent = 'Wind: ' + windHigh + ' MPH';
+                humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
+                dayEl.appendChild(tempEl);
+                dayEl.appendChild(windEl);
+                dayEl.appendChild(humidityEl);
+
+                forcastEl.appendChild(dayEl);
+                
+
+            }
+            
+
 
            
         }
+        
     }
+    console.log(tempHigh)
 }
 
 
