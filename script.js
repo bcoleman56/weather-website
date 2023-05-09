@@ -7,8 +7,11 @@ const apiKey = "201ef3350559cb400e5b0d954f191779";
 
 let searchHistory = []
 
-
-
+//function to convert temprature
+function kelvinToFahrenheit(kelTemp){
+    temp = Math.trunc(((kelTemp - 273.15) * 1.8) + 32, 2);
+    return temp;
+}
 
 // UPDATES HISTORY OF SEARCHED CITIES
 function updateSearchHistoy(city){
@@ -94,7 +97,8 @@ function renderResults(data){
         if (data.list[i].dt_txt.includes(day) && todayResult === false){
             console.log('today')
             console.log(data.list[i].dt_txt);
-            temp = Math.trunc(((data.list[i].main.temp - 273.15) * 1.8) + 32, 2);
+            temp = kelvinToFahrenheit(data.list[i].main.temp)
+            console.log(temp)
             wind = data.list[i].wind.speed;
             humidity = data.list[i].main.humidity;
 
@@ -104,7 +108,7 @@ function renderResults(data){
             let windEl = document.createElement('p');
             let humidityEl = document.createElement('p');
             let headingEl = document.createElement('h2');
-            tempEl.textContent = 'Temp: ' + temp + 'F';
+            tempEl.textContent = 'Temp: ' + temp + ' F';
             windEl.textContent = 'Wind: ' + wind + ' MPH';
             humidityEl.textContent = 'Humidity: ' + humidity + ' %';
             headingEl.textContent = data.city.name + ' ' + day;
@@ -122,7 +126,7 @@ function renderResults(data){
             //get the highest number for the date
 
             //sets variables
-            temp = Math.trunc(((data.list[i].main.temp - 273.15) * 1.8) + 32, 2);
+            temp = kelvinToFahrenheit(data.list[i].main.temp)
             wind = data.list[i].wind.speed;
             humidity = data.list[i].main.humidity;
 
