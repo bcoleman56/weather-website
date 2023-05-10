@@ -1,7 +1,9 @@
 const submitBtnEl = document.getElementById('submit');
-const submitInputEl = document.getElementById('city')
-const currentWeatherEl = document.getElementById('current-weather');
-const forcastEl = document.getElementById('forcast');
+const submitInputEl = document.getElementById('city');
+const currentWeatherContainerEl = document.getElementById('container-current-weather');
+const forcastContainerEl = document.getElementById('container-forcast');
+const citiesSearchedContainerEl = document.getElementById('container-cities-searched');
+
 
 const apiKey = "201ef3350559cb400e5b0d954f191779";
 
@@ -13,20 +15,31 @@ function kelvinToFahrenheit(kelTemp){
     return temp;
 }
 
+
+
+
+
+
+
+
 // UPDATES HISTORY OF SEARCHED CITIES
 function updateSearchHistoy(city){
     // check if it exists in local storage
     if(localStorage.getItem('search-history') !== null){
         searchHistory = JSON.parse(localStorage.getItem('search-history'));
     }
-    searchHistory.push(city)
-    localStorage.setItem('search-history', JSON.stringify(searchHistory));
+    
+    if(searchHistory.includes(city) === false){
+        searchHistory.push(city);
+    }
 
+    localStorage.setItem('search-history', JSON.stringify(searchHistory));
 }
 
 
 // GETS COORDS OF CITY BY CALLING OPENWEATHER'S GEOCODING API
-function getCoords(){
+function getCoords(event){
+    
     //grab user input
     let city = submitInputEl.value
 
@@ -82,7 +95,35 @@ function getWeather(lat, lon){
     })
 }
 
+function removeElements(){
+    // removes elements if they exist, so they aren't repeated
+
+    if (document.getElementById('current-weather')){
+        document.getElementById('current-weather').remove();
+    }
+    if (document.getElementById('forcast')){
+        document.getElementById('forcast').remove();
+    }
+    if (document.getElementById('cities-searched')){
+        document.getElementById('cities-searched').remove();
+    }
+    if (document.getElementById('heading')){
+        document.getElementById('heading').remove();
+    }
+    
+}
+
+
+
+
+
+
+
+
+
 function renderResults(data){
+    // removes existing elements so multiple versions aren't rendered at the same time
+    removeElements();
 
     // a counter so we only get the first result for
     let day = dayjs().format("YYYY-MM-DD"); 
@@ -95,18 +136,51 @@ function renderResults(data){
     let windHigh;
     let humidityHigh;
 
+
+    // CREATES CONTAINER FOR 5-DAY FORCAST AND ITS HEADING
+    let forcastEl = document.createElement('div');
+    forcastEl.id = 'forcast';
+    let headingEl = document.createElement('h2');
+    headingEl.id = 'heading';
+    headingEl.textContent = '5-Day Forecast';
+    forcastContainerEl.appendChild(headingEl);
+
+
+    searchHistory = JSON.parse(localStorage.getItem('search-history'));
+
+    let citiesSearchedEl = document.createElement('div');
+    citiesSearchedEl.id = 'cities-searched';
+
+    
+    for (let i = 0; i < searchHistory.length; i++){
+        let searchedEl = document.createElement('div');
+        searchedEl.textContent = searchHistory[i];
+        searchedEl.classList.add('bg-dark', 'text-white', 'p-1', 'm-1');
+        citiesSearchedEl.appendChild(searchedEl);
+    }
+    citiesSearchedContainerEl.appendChild(citiesSearchedEl);
+    citiesSearchedContainerEl.setAttribute('style', 'display: block');
+    console.log(searchHistory)
+
+
+
+
     for (let i = 0; i < data.list.length; i++){
-        console.log(data.list[i].dt_txt)
+        
         // If the date is today and if I havent rendered the most current weather yet
         if (data.list[i].dt_txt.includes(day) && todayResult === false){
-            console.log('today')
-            console.log(data.list[i].dt_txt);
+            
             temp = kelvinToFahrenheit(data.list[i].main.temp)
-            console.log(temp)
+          
             wind = data.list[i].wind.speed;
             humidity = data.list[i].main.humidity;
 
             //render todays results
+            let currentWeatherEl = document.createElement('div');
+            currentWeatherEl.classList.add('border' ,'border-dark', 'rounded', 'm-2', 'p-2')
+            currentWeatherEl.id = 'current-weather';
+
+            
             currentWeatherEl.setAttribute('style', 'display: block');
             forcastEl.setAttribute('style', 'display: flex');
             let tempEl = document.createElement('p');
@@ -122,6 +196,9 @@ function renderResults(data){
             currentWeatherEl.appendChild(windEl);
             currentWeatherEl.appendChild(humidityEl);
 
+            currentWeatherContainerEl.appendChild(currentWeatherEl);
+            
+
             todayResult = true;
 
         // if not today
@@ -129,7 +206,7 @@ function renderResults(data){
 
             day = data.list[i].dt_txt.slice(0,10);
 
-            //sets variables
+            //sets variables for weather data
             temp = kelvinToFahrenheit(data.list[i].main.temp)
             wind = data.list[i].wind.speed;
             humidity = data.list[i].main.humidity;
@@ -145,13 +222,10 @@ function renderResults(data){
             if (temp > tempHigh){tempHigh = temp}
             if (wind > windHigh){windHigh = wind}
             if (humidity > humidityHigh){humidityHigh = humidity}
-            console.log(temp)
+            
 
             // if it is last data element
             if (data.list.length - 1 === i){
-
-            } else if (data.list[i+1].dt_txt.slice(0,10) !== day) {
-                //render highs for the day
                 let dayEl = document.createElement('div');
                 let tempEl = document.createElement('p');
                 let windEl = document.createElement('p');
@@ -159,11 +233,36 @@ function renderResults(data){
                 tempEl.textContent = 'Temp: ' + tempHigh + ' F';
                 windEl.textContent = 'Wind: ' + windHigh + ' MPH';
                 humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
+                dayEl.classList.add('bg-secondary', 'm-2')
                 dayEl.appendChild(tempEl);
                 dayEl.appendChild(windEl);
                 dayEl.appendChild(humidityEl);
 
                 forcastEl.appendChild(dayEl);
+                forcastContainerEl.appendChild(forcastEl);
+                
+            } else if (data.list[i+1].dt_txt.slice(0,10) !== day || data.list.length - 1 === i) {
+                //render highs for the day
+                
+                let dayEl = document.createElement('div');
+                let tempEl = document.createElement('p');
+                let windEl = document.createElement('p');
+                let humidityEl = document.createElement('p');
+                tempEl.textContent = 'Temp: ' + tempHigh + ' F';
+                windEl.textContent = 'Wind: ' + windHigh + ' MPH';
+                humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
+                dayEl.classList.add('bg-secondary', 'm-2')
+                dayEl.appendChild(tempEl);
+                dayEl.appendChild(windEl);
+                dayEl.appendChild(humidityEl);
+
+                forcastEl.appendChild(dayEl);
+                forcastContainerEl.appendChild(forcastEl);
+
+                // sets highs to undefined so it is caught by the if statement above and resets highs for the day
+                tempHigh = undefined;
+                windHigh = undefined;
+                humidityHigh = undefined;
                 
 
             }
@@ -174,7 +273,7 @@ function renderResults(data){
         }
         
     }
-    console.log(tempHigh)
+    
 }
 
 
@@ -189,6 +288,3 @@ submitBtnEl.addEventListener('click', getCoords)
 
 
 
-// TODO:
-//  RENDER SEARCH HISTORY
-//  RENDER WEATHER DATA 
