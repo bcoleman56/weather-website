@@ -7,7 +7,7 @@ const citiesSearchedContainerEl = document.getElementById('container-cities-sear
 
 const apiKey = "201ef3350559cb400e5b0d954f191779";
 
-let searchHistory = []
+let searchHistory;
 
 //function to convert temprature
 function kelvinToFahrenheit(kelTemp){
@@ -16,32 +16,70 @@ function kelvinToFahrenheit(kelTemp){
 }
 
 
+// sets first characters and characters after spaces to uppercase
+function formatString(string){
+    string = string.toLowerCase();
+    
+    for (let i = 0; i < string.length; i++){
+        if (i === 0){
+            newString = string[i].toUpperCase();
+        } else if(string[i - 1] === ' '){
+            newString = newString.concat(string[i].toUpperCase())
+        } else{
+            newString = newString.concat(string[i])
+        }
+    }
+    return newString;
+}
 
 
 
+//------UPDATES SEARCH HISTORY FOR CITIES---------------------------------------------------------------
 
 
-
-// UPDATES HISTORY OF SEARCHED CITIES
 function updateSearchHistoy(city){
     // check if it exists in local storage
+    city = formatString(city)
+    
+    // if search history variable is in local storage
     if(localStorage.getItem('search-history') !== null){
         searchHistory = JSON.parse(localStorage.getItem('search-history'));
-    }
+    } 
     
     if(searchHistory.includes(city) === false){
         searchHistory.push(city);
     }
-
+    
     localStorage.setItem('search-history', JSON.stringify(searchHistory));
 }
 
 
-// GETS COORDS OF CITY BY CALLING OPENWEATHER'S GEOCODING API
-function getCoords(event){
+
+
+// gets city name from button clicks to call api with
+function getCityName(event){
+    if(event.target.id === 'submit'){
+        let city = submitInputEl.value;
+        console.log('submit ' + city);
+        getCoords(city);
+    }else {
+        console.log(event.target);
+        let city = event.target.textContent;
+        //puts city name in search bar
+        submitInputEl.value = city;
+        console.log('button ' + city);
+        // getButton();
+        getCoords(city);
+    }
+    
+}
+
+//-------CALL GEO-COORDS API---------------------------------------------------------------------------
+
+
+function getCoords(city){
     
     //grab user input
-    let city = submitInputEl.value
 
     console.log('Coords \n---------------')
     // fetches lat and long from openWeathers geocoding api
@@ -74,7 +112,9 @@ function getCoords(event){
     
 }
 
-// GETS WEATHER DATA FROM OPENWEATHER API FOR THE CITY THE USER TYPES IN
+
+//--------CALL WEATHER API-----------------------------------------------------------------------------
+
 function getWeather(lat, lon){
     // fetches the weather from openWeather api using lat and long we got from the other api
     fetch('https://api.openweathermap.org/data/2.5/forecast?lat='+ lat +'&lon='+ lon + '&appid=' + apiKey)
@@ -95,6 +135,9 @@ function getWeather(lat, lon){
     })
 }
 
+
+//-----REMOVE ELEMENTS ADDED THROUGH JS----------------------------------------------------------------
+
 function removeElements(){
     // removes elements if they exist, so they aren't repeated
 
@@ -114,10 +157,7 @@ function removeElements(){
 }
 
 
-
-
-
-
+//----RENDER RESULTS-----------------------------------------------------------------------------------
 
 
 
@@ -142,7 +182,7 @@ function renderResults(data){
     forcastEl.id = 'forcast';
     let headingEl = document.createElement('h2');
     headingEl.id = 'heading';
-    headingEl.textContent = '5-Day Forecast';
+    headingEl.textContent = '5-Day Forecast:';
     forcastContainerEl.appendChild(headingEl);
 
 
@@ -150,12 +190,14 @@ function renderResults(data){
 
     let citiesSearchedEl = document.createElement('div');
     citiesSearchedEl.id = 'cities-searched';
+    citiesSearchedEl.classList.add('btn-group-vertical', 'w-100');
+    
 
     
     for (let i = 0; i < searchHistory.length; i++){
-        let searchedEl = document.createElement('div');
+        let searchedEl = document.createElement('button');
         searchedEl.textContent = searchHistory[i];
-        searchedEl.classList.add('bg-dark', 'text-white', 'p-1', 'm-1');
+        searchedEl.classList.add('btn-light', 'btn', 'p-1','w-100');
         citiesSearchedEl.appendChild(searchedEl);
     }
     citiesSearchedContainerEl.appendChild(citiesSearchedEl);
@@ -166,9 +208,11 @@ function renderResults(data){
 
 
     for (let i = 0; i < data.list.length; i++){
-        
+        let day = data.list[i].dt_txt.slice(0,10);
+
+        let firstDay = data.list[0].dt_txt.slice(0,10);
         // If the date is today and if I havent rendered the most current weather yet
-        if (data.list[i].dt_txt.includes(day) && todayResult === false){
+        if (day === firstDay && todayResult === false){
             
             temp = kelvinToFahrenheit(data.list[i].main.temp)
           
@@ -202,9 +246,8 @@ function renderResults(data){
             todayResult = true;
 
         // if not today
-        } else {
-
-            day = data.list[i].dt_txt.slice(0,10);
+        } else if (day !== firstDay){
+            console.log(day)
 
             //sets variables for weather data
             temp = kelvinToFahrenheit(data.list[i].main.temp)
@@ -224,34 +267,27 @@ function renderResults(data){
             if (humidity > humidityHigh){humidityHigh = humidity}
             
 
-            // if it is last data element
-            if (data.list.length - 1 === i){
+            // RENDERS 5 DAY FORECAST
+            if ( data.list[i+1] === undefined || data.list[i+1].dt_txt.slice(0,10) !== day || data.list.length - 1 === i ) {
+                // render highs for the day
+                
                 let dayEl = document.createElement('div');
+                let dateEl = document.createElement('h5');
+                let imgEl = document.createElement('img');
                 let tempEl = document.createElement('p');
                 let windEl = document.createElement('p');
                 let humidityEl = document.createElement('p');
-                tempEl.textContent = 'Temp: ' + tempHigh + ' F';
-                windEl.textContent = 'Wind: ' + windHigh + ' MPH';
-                humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
-                dayEl.classList.add('bg-secondary', 'm-2')
-                dayEl.appendChild(tempEl);
-                dayEl.appendChild(windEl);
-                dayEl.appendChild(humidityEl);
 
-                forcastEl.appendChild(dayEl);
-                forcastContainerEl.appendChild(forcastEl);
-                
-            } else if (data.list[i+1].dt_txt.slice(0,10) !== day || data.list.length - 1 === i) {
-                //render highs for the day
-                
-                let dayEl = document.createElement('div');
-                let tempEl = document.createElement('p');
-                let windEl = document.createElement('p');
-                let humidityEl = document.createElement('p');
+                dateEl.textContent = day;
+                imgEl.src = 'https://openweathermap.org/img/wn/' + data.list[i].weather[0].icon + '@2x.png';
+                imgEl.classList.add('img')
                 tempEl.textContent = 'Temp: ' + tempHigh + ' F';
                 windEl.textContent = 'Wind: ' + windHigh + ' MPH';
                 humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
-                dayEl.classList.add('bg-secondary', 'm-2')
+
+                dayEl.classList.add('bg-primary', 'text-white', 'border', 'border-dark', 'rounded', 'm-2', 'p-2')
+                dayEl.appendChild(dateEl);
+                dayEl.appendChild(imgEl);
                 dayEl.appendChild(tempEl);
                 dayEl.appendChild(windEl);
                 dayEl.appendChild(humidityEl);
@@ -266,24 +302,15 @@ function renderResults(data){
                 
 
             }
-            
-
-
-           
         }
-        
     }
-    
 }
 
 
-
-
-
-
-
 // EVENT LISTENER FOR SEARCH BUTTON
-submitBtnEl.addEventListener('click', getCoords)
+submitBtnEl.addEventListener('click', getCityName)
+citiesSearchedContainerEl.addEventListener('click', getCityName)
+
 
 
 

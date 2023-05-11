@@ -16,32 +16,27 @@
     </header>
     <div class="container">
         <div class="row">
-            <div id="search" class=" input-group col-6 col-lg-3">
-                <h2>Search for a City: </h2>
-                <input id="city" class="w-100"  type="text" placeholder="ex. San Diego">
-                <button id="submit" class="btn btn-primary my-3 w-100" type="submit">Search</button>
+
+            <div class="col-6 col-lg-3">
+                <div id="search" class=" input-group">
+                    <h2>Search for a City: </h2>
+                    <input id="city" class="w-100"  type="text" placeholder="ex. San Diego">
+                    <button id="submit" class="btn btn-primary my-3 w-100" type="submit">Search</button>
+                </div>
+                <div id="container-cities-searched" class="border-top py-3"></div>
             </div>
 
-            <div id="container-current-weather" class="col-6 col-lg-9 my-3">
-                <div id="current-weather">
+            <div class="col-6 col-lg-9">
+                <div id="container-current-weather" class="my-3">
+                    <div id="current-weather">
+                    </div>
+                </div>
+                <div class=" my-3 p-3">
+                    <div id="container-forcast"></div>
                 </div>
             </div>
+            
         </div>
-
-        <div class="row">
-            <div id="container-cities-searched" class="input-group border-top col-6 col-lg-3 py-3">
-
-            </div>
-            <div class="col-6 col-lg-9 my-3">
-                <div id="container-forcast">
-                    
-                </div>
-                
-            </div>
-        </div>
-        
-
-        
     </div>
 </body>
 </html>
