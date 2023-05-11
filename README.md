@@ -4,7 +4,7 @@
 This web application lets the user get the weather for a city.
 
 ## Installation
-Link to deployed application: 
+Link to deployed application: https://bcoleman56.github.io/weather-website/
 
 
 ## Usage
