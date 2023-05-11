@@ -9,7 +9,7 @@ const apiKey = "201ef3350559cb400e5b0d954f191779";
 console
 
 
-let searchHistory;
+let searchHistory = [];
 
 //function to convert temprature
 function kelvinToFahrenheit(kelTemp){
