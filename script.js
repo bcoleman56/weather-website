@@ -6,6 +6,8 @@ const citiesSearchedContainerEl = document.getElementById('container-cities-sear
 
 
 const apiKey = "201ef3350559cb400e5b0d954f191779";
+console
+
 
 let searchHistory;
 
@@ -60,14 +62,11 @@ function updateSearchHistoy(city){
 function getCityName(event){
     if(event.target.id === 'submit'){
         let city = submitInputEl.value;
-        console.log('submit ' + city);
         getCoords(city);
     }else {
-        console.log(event.target);
         let city = event.target.textContent;
         //puts city name in search bar
         submitInputEl.value = city;
-        console.log('button ' + city);
         // getButton();
         getCoords(city);
     }
@@ -83,7 +82,7 @@ function getCoords(city){
 
     console.log('Coords \n---------------')
     // fetches lat and long from openWeathers geocoding api
-    fetch('http://api.openweathermap.org/geo/1.0/direct?q='+ city +'&limit=5&appid=' + apiKey)
+    fetch('https://api.openweathermap.org/geo/1.0/direct?q='+ city +'&limit=5&appid=' + apiKey)
     .then(function(response){
         if (response.status !== 200){
             alert('Something went wrong. API response not 200')
@@ -93,8 +92,6 @@ function getCoords(city){
     })
     .then(function(data){
         if (data.length !== 0){
-            console.log(data)
-            console.log('here is some data \n----------------\n' + data.length);
             let latitude = data[0].lat;
             let longitude = data[0].lon;
             getWeather(latitude, longitude);
@@ -119,8 +116,7 @@ function getWeather(lat, lon){
     // fetches the weather from openWeather api using lat and long we got from the other api
     fetch('https://api.openweathermap.org/data/2.5/forecast?lat='+ lat +'&lon='+ lon + '&appid=' + apiKey)
     .then(function(response){
-        console.log('Weather \n---------------')
-        console.log(response.status);
+        
         if (response.status !== 200){
             alert('Something went wrong. API response not 200')
         } else{
@@ -129,7 +125,6 @@ function getWeather(lat, lon){
     })
     .then(function(data){
         // weather data for city we typed in 
-        console.log(data)
         renderResults(data)
         
     })
@@ -166,7 +161,6 @@ function renderResults(data){
     removeElements();
 
     // a counter so we only get the first result for
-    let day = dayjs().format("YYYY-MM-DD"); 
     let todayResult = false;
     let temp;
     let wind;
@@ -247,7 +241,6 @@ function renderResults(data){
 
         // if not today
         } else if (day !== firstDay){
-            console.log(day)
 
             //sets variables for weather data
             temp = kelvinToFahrenheit(data.list[i].main.temp)
