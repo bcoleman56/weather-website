@@ -6,7 +6,8 @@ const citiesSearchedContainerEl = document.getElementById('container-cities-sear
 
 
 const apiKey = "201ef3350559cb400e5b0d954f191779";
-console
+let firstDay = dayjs().format('YYYY-MM-DD');
+
 
 
 let searchHistory = [];
@@ -77,10 +78,7 @@ function getCityName(event){
 
 
 function getCoords(city){
-    
-    //grab user input
 
-    console.log('Coords \n---------------')
     // fetches lat and long from openWeathers geocoding api
     fetch('https://api.openweathermap.org/geo/1.0/direct?q='+ city +'&limit=5&appid=' + apiKey)
     .then(function(response){
@@ -94,7 +92,8 @@ function getCoords(city){
         if (data.length !== 0){
             let latitude = data[0].lat;
             let longitude = data[0].lon;
-            getWeather(latitude, longitude);
+            getForecast(latitude, longitude);
+            getCurrent(latitude, longitude);
             // TODO: add data to search history 
             updateSearchHistoy(city);
             //  using local storage to store an array of cities
@@ -112,7 +111,7 @@ function getCoords(city){
 
 //--------CALL WEATHER API-----------------------------------------------------------------------------
 
-function getWeather(lat, lon){
+function getForecast(lat, lon){
     // fetches the weather from openWeather api using lat and long we got from the other api
     fetch('https://api.openweathermap.org/data/2.5/forecast?lat='+ lat +'&lon='+ lon + '&appid=' + apiKey)
     .then(function(response){
@@ -125,10 +124,29 @@ function getWeather(lat, lon){
     })
     .then(function(data){
         // weather data for city we typed in 
-        renderResults(data)
-        
+        renderFiveDay(data)
+
     })
 }
+
+
+function getCurrent(lat, lon){
+    
+    fetch('https://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon + '&appid=' + apiKey)
+    .then(function(response){
+        if (response.status !== 200){
+            alert('Something went wrong. API response not 200')
+        } else{
+            return response.json();
+        }
+    })
+    .then(function(data){
+
+        renderCurrent(data)
+    })
+}
+
+
 
 
 //-----REMOVE ELEMENTS ADDED THROUGH JS----------------------------------------------------------------
@@ -155,13 +173,46 @@ function removeElements(){
 //----RENDER RESULTS-----------------------------------------------------------------------------------
 
 
+function renderCurrent(data){
+    let day = firstDay;
 
-function renderResults(data){
+    temp = kelvinToFahrenheit(data.main.temp)
+    wind = data.wind.speed;
+    humidity = data.main.humidity;
+
+    //render todays results
+    let currentWeatherEl = document.createElement('div');
+    currentWeatherEl.classList.add('border' ,'border-dark', 'rounded', 'm-2', 'p-2')
+    currentWeatherEl.id = 'current-weather';
+
+    
+
+    currentWeatherEl.setAttribute('style', 'display: block');
+    
+    let tempEl = document.createElement('p');
+    let windEl = document.createElement('p');
+    let humidityEl = document.createElement('p');
+    let headingEl = document.createElement('h2');
+    tempEl.textContent = 'Temp: ' + temp + ' F';
+    windEl.textContent = 'Wind: ' + wind + ' MPH';
+    humidityEl.textContent = 'Humidity: ' + humidity + ' %';
+    headingEl.textContent = data.name + ' ' + day;
+    currentWeatherEl.appendChild(headingEl);
+    currentWeatherEl.appendChild(tempEl);
+    currentWeatherEl.appendChild(windEl);
+    currentWeatherEl.appendChild(humidityEl);
+
+    currentWeatherContainerEl.appendChild(currentWeatherEl);
+
+
+}
+
+
+function renderFiveDay(data){
     // removes existing elements so multiple versions aren't rendered at the same time
     removeElements();
-
-    // a counter so we only get the first result for
-    let todayResult = false;
+    
+    //defines variables
     let temp;
     let wind;
     let humidity;
@@ -173,6 +224,7 @@ function renderResults(data){
 
     // CREATES CONTAINER FOR 5-DAY FORCAST AND ITS HEADING
     let forcastEl = document.createElement('div');
+    forcastEl.setAttribute('style', 'display: flex');
     forcastEl.id = 'forcast';
     let headingEl = document.createElement('h2');
     headingEl.id = 'heading';
@@ -200,100 +252,72 @@ function renderResults(data){
 
 
 
+    //loops through array
 
+    let days = 0;
     for (let i = 0; i < data.list.length; i++){
         let day = data.list[i].dt_txt.slice(0,10);
 
-        let firstDay = data.list[0].dt_txt.slice(0,10);
-        // If the date is today and if I havent rendered the most current weather yet
-        if (day === firstDay && todayResult === false){
-            
-            temp = kelvinToFahrenheit(data.list[i].main.temp)
-          
-            wind = data.list[i].wind.speed;
-            humidity = data.list[i].main.humidity;
+        if (days < 5){
+            // if not today
+            if (day !== firstDay){
 
-            //render todays results
-            let currentWeatherEl = document.createElement('div');
-            currentWeatherEl.classList.add('border' ,'border-dark', 'rounded', 'm-2', 'p-2')
-            currentWeatherEl.id = 'current-weather';
+                //sets variables for weather data
+                temp = kelvinToFahrenheit(data.list[i].main.temp)
+                wind = data.list[i].wind.speed;
+                humidity = data.list[i].main.humidity;
 
-            
-            currentWeatherEl.setAttribute('style', 'display: block');
-            forcastEl.setAttribute('style', 'display: flex');
-            let tempEl = document.createElement('p');
-            let windEl = document.createElement('p');
-            let humidityEl = document.createElement('p');
-            let headingEl = document.createElement('h2');
-            tempEl.textContent = 'Temp: ' + temp + ' F';
-            windEl.textContent = 'Wind: ' + wind + ' MPH';
-            humidityEl.textContent = 'Humidity: ' + humidity + ' %';
-            headingEl.textContent = data.city.name + ' ' + day;
-            currentWeatherEl.appendChild(headingEl);
-            currentWeatherEl.appendChild(tempEl);
-            currentWeatherEl.appendChild(windEl);
-            currentWeatherEl.appendChild(humidityEl);
+                // if its the first time in the array for the next day we set those values as the highs
+                if (tempHigh === undefined){
+                    tempHigh = temp;
+                    windHigh = wind;
+                    humidityHigh = humidity;
+                }
 
-            currentWeatherContainerEl.appendChild(currentWeatherEl);
-            
-
-            todayResult = true;
-
-        // if not today
-        } else if (day !== firstDay){
-
-            //sets variables for weather data
-            temp = kelvinToFahrenheit(data.list[i].main.temp)
-            wind = data.list[i].wind.speed;
-            humidity = data.list[i].main.humidity;
-
-            // if its the first time in the array for the next day we set those values as the highs
-            if (tempHigh === undefined){
-                tempHigh = temp;
-                windHigh = wind;
-                humidityHigh = humidity;
-            }
-
-            // GET HIGHS
-            if (temp > tempHigh){tempHigh = temp}
-            if (wind > windHigh){windHigh = wind}
-            if (humidity > humidityHigh){humidityHigh = humidity}
-            
-
-            // RENDERS 5 DAY FORECAST
-            if ( data.list[i+1] === undefined || data.list[i+1].dt_txt.slice(0,10) !== day || data.list.length - 1 === i ) {
-                // render highs for the day
-                
-                let dayEl = document.createElement('div');
-                let dateEl = document.createElement('h5');
-                let imgEl = document.createElement('img');
-                let tempEl = document.createElement('p');
-                let windEl = document.createElement('p');
-                let humidityEl = document.createElement('p');
-
-                dateEl.textContent = day;
-                imgEl.src = 'https://openweathermap.org/img/wn/' + data.list[i].weather[0].icon + '@2x.png';
-                imgEl.classList.add('img')
-                tempEl.textContent = 'Temp: ' + tempHigh + ' F';
-                windEl.textContent = 'Wind: ' + windHigh + ' MPH';
-                humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
-
-                dayEl.classList.add('bg-primary', 'text-white', 'border', 'border-dark', 'rounded', 'm-2', 'p-2')
-                dayEl.appendChild(dateEl);
-                dayEl.appendChild(imgEl);
-                dayEl.appendChild(tempEl);
-                dayEl.appendChild(windEl);
-                dayEl.appendChild(humidityEl);
-
-                forcastEl.appendChild(dayEl);
-                forcastContainerEl.appendChild(forcastEl);
-
-                // sets highs to undefined so it is caught by the if statement above and resets highs for the day
-                tempHigh = undefined;
-                windHigh = undefined;
-                humidityHigh = undefined;
+                // GET HIGHS
+                if (temp > tempHigh){tempHigh = temp}
+                if (wind > windHigh){windHigh = wind}
+                if (humidity > humidityHigh){humidityHigh = humidity}
                 
 
+                // RENDERS 5 DAY FORECAST
+                if (data.list[i+1] === undefined || data.list[i+1].dt_txt.slice(0,10) !== day || data.list.length - 1 === i ) {
+                    // render highs for the day
+
+                    
+                    let dayEl = document.createElement('div');
+                    let dateEl = document.createElement('h5');
+                    let imgEl = document.createElement('img');
+                    let tempEl = document.createElement('p');
+                    let windEl = document.createElement('p');
+                    let humidityEl = document.createElement('p');
+
+                    dateEl.textContent = day;
+                    imgEl.src = 'https://openweathermap.org/img/wn/' + data.list[i].weather[0].icon + '@2x.png';
+                    imgEl.classList.add('img')
+                    tempEl.textContent = 'Temp: ' + tempHigh + ' F';
+                    windEl.textContent = 'Wind: ' + windHigh + ' MPH';
+                    humidityEl.textContent = 'Humidity: ' + humidityHigh + ' %';
+
+                    dayEl.classList.add('bg-primary', 'text-white', 'border', 'border-dark', 'rounded', 'm-2', 'p-2')
+                    dayEl.appendChild(dateEl);
+                    dayEl.appendChild(imgEl);
+                    dayEl.appendChild(tempEl);
+                    dayEl.appendChild(windEl);
+                    dayEl.appendChild(humidityEl);
+
+                    forcastEl.appendChild(dayEl);
+                    forcastContainerEl.appendChild(forcastEl);
+
+                    // sets highs to undefined so it is caught by the if statement above and resets highs for the day
+                    tempHigh = undefined;
+                    windHigh = undefined;
+                    humidityHigh = undefined;
+
+                    days++;
+                    
+                }
+        
             }
         }
     }
